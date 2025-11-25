@@ -260,6 +260,8 @@ public class BlackjackClientGUI extends JFrame {
             connectButton.setEnabled(false);
             appendLog("서버에 연결되었습니다: " + serverIP + ":" + serverPort);
             
+            updateUIState();
+            
             // Start listener thread
             listenerThread = new Thread(() -> {
                 try {
