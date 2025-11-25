@@ -1,5 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextLayout;
+import java.awt.geom.AffineTransform;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -25,6 +28,7 @@ public class BlackjackClientGUI extends JFrame {
     private JLabel balanceLabel;
     private JLabel currentBetLabel;
     private JLabel gameStatusLabel;
+    private JLabel resultLabel; // ★ 테두리가 적용된 커스텀 라벨
     
     private JPanel dealerCardsPanel;
     private JPanel playerCardsPanel;
@@ -49,8 +53,6 @@ public class BlackjackClientGUI extends JFrame {
     private boolean isConnected = false;
     private boolean isMyTurn = false;
     private boolean isBettingPhase = false;
-    private String lastGameResult = ""; 
-    private Color lastResultColor = Color.BLACK;
     
     private List<JLabel> dealerCardLabels = new ArrayList<>();
     private List<JLabel> playerCardLabels = new ArrayList<>();
@@ -64,23 +66,18 @@ public class BlackjackClientGUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         
-        // 상단: 서버 연결 패널
         JPanel topPanel = createConnectionPanel();
         add(topPanel, BorderLayout.NORTH);
         
-        // 중앙: 게임 보드
         JPanel gameBoard = createGameBoard();
         add(gameBoard, BorderLayout.CENTER);
         
-        // 왼쪽: 정보 패널
         JPanel infoPanel = createInfoPanel();
         add(infoPanel, BorderLayout.WEST);
         
-        // 오른쪽: 액션 버튼 패널
         JPanel actionPanel = createActionPanel();
         add(actionPanel, BorderLayout.EAST);
         
-        // 하단: 메시지 로그
         JPanel logPanel = createLogPanel();
         add(logPanel, BorderLayout.SOUTH);
         
@@ -120,7 +117,6 @@ public class BlackjackClientGUI extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder("게임 보드"));
         
-        // ★ 디자인 개선: 고급스러운 카지노 펠트 색상
         Color tableColor = new Color(0, 102, 51); 
         panel.setBackground(tableColor); 
         
@@ -140,6 +136,12 @@ public class BlackjackClientGUI extends JFrame {
         dealerCardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
         dealerCardsPanel.setBackground(tableColor);
         dealerSection.add(dealerCardsPanel, BorderLayout.CENTER);
+        
+        // ★ 수정됨: 일반 JLabel 대신 커스텀 OutlineLabel 사용
+        resultLabel = new OutlineLabel("");
+        resultLabel.setHorizontalAlignment(JLabel.CENTER);
+        resultLabel.setFont(new Font("맑은 고딕", Font.BOLD, 80));
+        panel.add(resultLabel, BorderLayout.CENTER);
         
         // 플레이어 영역
         JPanel playerSection = new JPanel(new BorderLayout());
@@ -167,7 +169,7 @@ public class BlackjackClientGUI extends JFrame {
     private JPanel createInfoPanel() {
         JPanel panel = new JPanel(new GridLayout(6, 1, 5, 5));
         panel.setBorder(BorderFactory.createTitledBorder("게임 정보"));
-        panel.setPreferredSize(new Dimension(200, 200));
+        panel.setPreferredSize(new Dimension(270, 200)); // 너비 수정됨
         
         balanceLabel = new JLabel("잔액: " + balance);
         balanceLabel.setFont(new Font("맑은 고딕", Font.BOLD, 14));
@@ -177,7 +179,7 @@ public class BlackjackClientGUI extends JFrame {
         currentBetLabel.setFont(new Font("맑은 고딕", Font.BOLD, 14));
         panel.add(currentBetLabel);
         
-        panel.add(new JLabel("")); // 공간
+        panel.add(new JLabel("")); 
         
         panel.add(new JLabel("베팅 금액:"));
         betAmountField = new JTextField("100");
@@ -194,13 +196,12 @@ public class BlackjackClientGUI extends JFrame {
         return panel;
     }
 
-    // ★ 디자인 개선: 버튼 꾸미기 도우미 함수
     private void decorateButton(JButton btn, Color bg) {
         btn.setBackground(bg);
         btn.setForeground(Color.BLACK);
         btn.setFocusPainted(false);
-        btn.setFont(new Font("맑은 고딕", Font.BOLD, 14));
-        btn.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        btn.setFont(new Font("맑은 고딕", Font.BOLD, 16));
+        btn.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
     }
 
@@ -210,17 +211,16 @@ public class BlackjackClientGUI extends JFrame {
         panel.setPreferredSize(new Dimension(160, 200));
         
         hitButton = new JButton("HIT (히트)");
-        decorateButton(hitButton, new Color(46, 204, 113)); // 밝은 초록
+        decorateButton(hitButton, new Color(46, 204, 113));
 
         standButton = new JButton("STAND (스탠드)");
-        decorateButton(standButton, new Color(231, 76, 60)); // 붉은색
+        decorateButton(standButton, new Color(231, 76, 60));
 
         doubleDownButton = new JButton("DOUBLE DOWN");
-        decorateButton(doubleDownButton, new Color(241, 196, 15)); // 노란색
-        doubleDownButton.setForeground(Color.BLACK);
+        decorateButton(doubleDownButton, new Color(241, 196, 15));
 
         surrenderButton = new JButton("SURRENDER");
-        decorateButton(surrenderButton, new Color(149, 165, 166)); // 회색
+        decorateButton(surrenderButton, new Color(149, 165, 166));
 
         hitButton.addActionListener(e -> sendAction("Hit"));
         standButton.addActionListener(e -> sendAction("Stand"));
@@ -271,10 +271,8 @@ public class BlackjackClientGUI extends JFrame {
             connectButton.setEnabled(false);
             appendLog("서버에 연결되었습니다: " + serverIP + ":" + serverPort);
             
-            // ★ 수정됨: 연결 직후 버튼 상태 갱신
             updateUIState();
             
-            // Start listener thread
             listenerThread = new Thread(() -> {
                 try {
                     String msg;
@@ -325,12 +323,12 @@ public class BlackjackClientGUI extends JFrame {
         } else if (msg.contains("GAME_PHASE: Betting Phase")) {
             isBettingPhase = true;
             isMyTurn = false;
-            lastGameResult = ""; // ★ 새 게임 시작하면 결과 텍스트 초기화
+            resultLabel.setText("");
             updateUIState();
         } else if (msg.contains("ROUND_START")) {
             isBettingPhase = false;
-            lastGameResult = ""; // ★ 라운드 시작하면 결과 텍스트 초기화
             clearCards();
+            resultLabel.setText("");
             updateUIState();
         } else if (msg.contains("INITIAL_DEAL")) {
             parseInitialDeal(msg);
@@ -346,43 +344,35 @@ public class BlackjackClientGUI extends JFrame {
             isMyTurn = false;
             isBettingPhase = false;
             updateUIState();
-            
-        // ★ 핵심: 승패 신호를 받으면 변수에 저장하고 화면 갱신
         } else if (msg.startsWith("GAME_RESULT:")) {
             String result = msg.split(":")[1].trim();
             if (result.equals("WIN")) {
-                lastGameResult = "WIN!";
-                lastResultColor = Color.decode("#e7bb54"); // 황금색
+                resultLabel.setText("WIN!");
+                resultLabel.setForeground(Color.decode("#e7bb54"));
             } else if (result.equals("LOSE")) {
-                lastGameResult = "LOSE...";
-                lastResultColor = Color.decode("#4d3add"); // 보라색
+                resultLabel.setText("LOSE...");
+                resultLabel.setForeground(Color.decode("#064abf")); // ★ 요청하신 파란색
             } else if (result.equals("TIE")) {
-                lastGameResult = "TIE (PUSH)";
-                lastResultColor = Color.WHITE;
+                resultLabel.setText("TIE");
+                resultLabel.setForeground(Color.decode("#a3a3a3"));
             }
             updateUIState();
         }
     }
 
-    // ★ 수정됨: 카드 각각 보여주는 로직 적용 (Initial Deal)
     private void parseInitialDeal(String msg) {
-        // 형식: "INITIAL_DEAL: Dealer=[3], Cards=[10,6], Total=[16]"
         try {
-            // 1. 딜러 카드 파싱
             String dealerPart = msg.substring(msg.indexOf("Dealer=[") + 8);
             dealerPart = dealerPart.substring(0, dealerPart.indexOf("]"));
             dealerScore = Integer.parseInt(dealerPart);
             
-            // 2. 내 카드 목록 파싱
             String cardsPart = msg.substring(msg.indexOf("Cards=[") + 7);
             cardsPart = cardsPart.substring(0, cardsPart.indexOf("]"));
             
-            // 3. 점수 파싱
             String totalPart = msg.substring(msg.indexOf("Total=[") + 7);
             totalPart = totalPart.substring(0, totalPart.indexOf("]"));
             playerScore = Integer.parseInt(totalPart);
 
-            // 화면 그리기
             clearCards();
             addDealerCard(dealerScore);
             
@@ -390,7 +380,6 @@ public class BlackjackClientGUI extends JFrame {
             for (String c : cards) {
                 addPlayerCard(Integer.parseInt(c.trim()));
             }
-            
             updateScores();
             
         } catch (Exception e) {
@@ -400,7 +389,6 @@ public class BlackjackClientGUI extends JFrame {
 
     private void parseDealerCard(String msg) {
         try {
-            // 다양한 형식 지원 (괄호 안 Score 파싱)
             int startIdx = msg.lastIndexOf("Score: ") + 7;
             if (startIdx < 7) startIdx = msg.lastIndexOf("Score:") + 6;
             
@@ -414,15 +402,10 @@ public class BlackjackClientGUI extends JFrame {
             dealerScore = newScore;
             addDealerCard(cardValue);
             updateScores();
-        } catch (Exception e) {
-             // 딜러 드로우 파싱 실패 시 조용히 넘어감 (로그만 남김)
-             // appendLog("딜러 카드 파싱 오류: " + e.getMessage());
-        }
+        } catch (Exception e) {}
     }
 
-    // ★ 수정됨: 카드 각각 보여주는 로직 적용 (Hit / DoubleDown)
     private void parsePlayerCard(String msg) {
-        // 형식: "Hit! (Draw: 5, Score: 21)"
         try {
             if (msg.contains("Draw:")) {
                 int drawIndex = msg.indexOf("Draw:") + 5;
@@ -484,7 +467,6 @@ public class BlackjackClientGUI extends JFrame {
         playerCardsPanel.repaint();
     }
 
-    // ★ 디자인 개선: 카드 모양 예쁘게
     private JLabel createCardLabel(int value, Color bgColor, Color textColor) {
         JLabel label = new JLabel(String.valueOf(value), JLabel.CENTER);
         label.setPreferredSize(new Dimension(80, 110));
@@ -563,7 +545,6 @@ public class BlackjackClientGUI extends JFrame {
         }
     }
 
-    // ★ 수정됨: 버튼 활성화 로직 개선 (강제 활성화 포함)
     private void updateUIState() {
         startGameButton.setEnabled(isConnected && !isBettingPhase && !isMyTurn);
         betButton.setEnabled(isConnected && isBettingPhase);
@@ -575,17 +556,12 @@ public class BlackjackClientGUI extends JFrame {
         doubleDownButton.setEnabled(canAct);
         surrenderButton.setEnabled(canAct);
         
-        // 상태 메시지 우선순위 처리
         if (isMyTurn) {
             gameStatusLabel.setText("당신의 턴");
             gameStatusLabel.setForeground(Color.YELLOW);
         } else if (isBettingPhase) {
             gameStatusLabel.setText("베팅 단계");
             gameStatusLabel.setForeground(Color.ORANGE);
-        } else if (!lastGameResult.isEmpty()) { 
-            // ★ 게임 결과가 있으면 그걸 보여줍니다 (WIN! / LOSE...)
-            gameStatusLabel.setText(lastGameResult);
-            gameStatusLabel.setForeground(lastResultColor);
         } else if (isConnected) {
             gameStatusLabel.setText("연결됨");
             gameStatusLabel.setForeground(Color.GREEN);
@@ -607,5 +583,50 @@ public class BlackjackClientGUI extends JFrame {
             
             new BlackjackClientGUI().setVisible(true);
         });
+    }
+
+    // ★ 핵심: 글자 테두리를 그려주는 커스텀 라벨 클래스
+    // 이 클래스가 있어야 글씨가 선명하게 보입니다.
+    class OutlineLabel extends JLabel {
+        private Color outlineColor = Color.BLACK;
+        private int outlineThickness = 3; // 테두리 두께
+
+        public OutlineLabel(String text) {
+            super(text);
+        }
+
+        @Override
+        public void paintComponent(Graphics g) {
+            String text = getText();
+            if (text == null || text.isEmpty()) {
+                super.paintComponent(g);
+                return;
+            }
+
+            Graphics2D g2d = (Graphics2D) g.create();
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+            FontRenderContext frc = g2d.getFontRenderContext();
+            TextLayout tl = new TextLayout(text, getFont(), frc);
+            Shape shape = tl.getOutline(AffineTransform.getTranslateInstance(0, 0));
+
+            // 글자 중앙 정렬을 위한 좌표 계산
+            Rectangle bounds = shape.getBounds();
+            int x = (getWidth() - bounds.width) / 2 - bounds.x;
+            int y = (getHeight() - bounds.height) / 2 - bounds.y;
+            g2d.translate(x, y);
+
+            // 1. 테두리 그리기 (검은색)
+            g2d.setColor(outlineColor);
+            g2d.setStroke(new BasicStroke(outlineThickness));
+            g2d.draw(shape);
+
+            // 2. 글자 내부 채우기 (원래 설정한 색상: WIN=황금색, LOSE=파란색 등)
+            g2d.setColor(getForeground());
+            g2d.fill(shape);
+
+            g2d.dispose();
+        }
     }
 }
