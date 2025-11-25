@@ -100,7 +100,7 @@ public class GameRoom {
             
             p.addCardScore(c1 + c2);
 
-            // ★ 여기가 수정된 핵심 부분입니다! (카드 각각 전송)
+            // ★ 수정됨: 카드 각각 전송
             p.sendMessage("INITIAL_DEAL: Dealer=[" + dealerScore + "], Cards=[" + c1 + "," + c2 + "], Total=[" + p.getScore() + "]");
             
             if (p.getScore() == 21) {
@@ -136,12 +136,11 @@ public class GameRoom {
                 broadcast("RESULT: [" + player.getPlayerId() + "] BUST! (Over 21)");
                 nextTurn(); // 21점 넘으면 다음 사람 턴으로
             } else {
-                // ★★★ [중요] 21점을 안 넘었으면, "다시 당신 턴입니다"라고 알려줘야 버튼이 켜집니다! ★★★
+                // ★★★ 21점을 안 넘었으면 다시 턴을 줌 (버튼 활성화용)
                 player.sendMessage("YOUR_TURN: Choose action (HIT, STAND, DOUBLEDOWN, SURRENDER).");
             }
             
-        }
-        } else if (action.equalsIgnoreCase("Stand")) {
+        } else if (action.equalsIgnoreCase("Stand")) { // ★ 중괄호 오류 수정됨
             broadcast("ACTION: [" + player.getPlayerId() + "] Stand. (Turn Ended)");
             nextTurn();
         } else if (action.equalsIgnoreCase("DoubleDown")) {
