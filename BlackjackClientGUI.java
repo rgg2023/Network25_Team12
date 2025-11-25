@@ -108,6 +108,7 @@ public class BlackjackClientGUI extends JFrame {
         
         gameStatusLabel = new JLabel("연결 안됨");
         gameStatusLabel.setForeground(Color.RED);
+        gameStatusLabel.setFont(new Font("맑은 고딕", Font.BOLD, 14));
         panel.add(gameStatusLabel);
         
         return panel;
@@ -117,25 +118,24 @@ public class BlackjackClientGUI extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder("게임 보드"));
         
-        // ★ 색상 변경: 조금 더 진하고 고급스러운 펠트지 색깔
+        // ★ 디자인 개선: 고급스러운 카지노 펠트 색상
         Color tableColor = new Color(0, 102, 51); 
-        
         panel.setBackground(tableColor); 
         
         // 딜러 영역
         JPanel dealerSection = new JPanel(new BorderLayout());
-        dealerSection.setBackground(tableColor); // 같은 색 적용
+        dealerSection.setBackground(tableColor);
         dealerSection.setBorder(BorderFactory.createTitledBorder(null, "딜러", 
             javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, 
             javax.swing.border.TitledBorder.DEFAULT_POSITION, 
-            new Font("Dialog", Font.BOLD, 12), Color.WHITE)); // 타이틀도 흰색으로
+            new Font("맑은 고딕", Font.BOLD, 12), Color.WHITE));
         
         dealerScoreLabel = new JLabel("점수: -", JLabel.CENTER);
-        dealerScoreLabel.setFont(new Font("Dialog", Font.BOLD, 18)); // 폰트 키움
+        dealerScoreLabel.setFont(new Font("맑은 고딕", Font.BOLD, 18));
         dealerScoreLabel.setForeground(Color.WHITE);
         dealerSection.add(dealerScoreLabel, BorderLayout.NORTH);
         
-        dealerCardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15)); // 카드 사이 간격 넓힘
+        dealerCardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
         dealerCardsPanel.setBackground(tableColor);
         dealerSection.add(dealerCardsPanel, BorderLayout.CENTER);
         
@@ -145,10 +145,10 @@ public class BlackjackClientGUI extends JFrame {
         playerSection.setBorder(BorderFactory.createTitledBorder(null, "플레이어", 
             javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, 
             javax.swing.border.TitledBorder.DEFAULT_POSITION, 
-            new Font("Dialog", Font.BOLD, 12), Color.WHITE));
+            new Font("맑은 고딕", Font.BOLD, 12), Color.WHITE));
         
         playerScoreLabel = new JLabel("점수: -", JLabel.CENTER);
-        playerScoreLabel.setFont(new Font("Dialog", Font.BOLD, 18));
+        playerScoreLabel.setFont(new Font("맑은 고딕", Font.BOLD, 18));
         playerScoreLabel.setForeground(Color.WHITE);
         playerSection.add(playerScoreLabel, BorderLayout.NORTH);
         
@@ -168,11 +168,11 @@ public class BlackjackClientGUI extends JFrame {
         panel.setPreferredSize(new Dimension(200, 200));
         
         balanceLabel = new JLabel("잔액: " + balance);
-        balanceLabel.setFont(new Font("Dialog", Font.BOLD, 14));
+        balanceLabel.setFont(new Font("맑은 고딕", Font.BOLD, 14));
         panel.add(balanceLabel);
         
         currentBetLabel = new JLabel("현재 베팅: " + currentBet);
-        currentBetLabel.setFont(new Font("Dialog", Font.BOLD, 14));
+        currentBetLabel.setFont(new Font("맑은 고딕", Font.BOLD, 14));
         panel.add(currentBetLabel);
         
         panel.add(new JLabel("")); // 공간
@@ -192,25 +192,34 @@ public class BlackjackClientGUI extends JFrame {
         return panel;
     }
 
+    // ★ 디자인 개선: 버튼 꾸미기 도우미 함수
+    private void decorateButton(JButton btn, Color bg) {
+        btn.setBackground(bg);
+        btn.setForeground(Color.BLACK);
+        btn.setFocusPainted(false);
+        btn.setFont(new Font("맑은 고딕", Font.BOLD, 14));
+        btn.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }
+
     private JPanel createActionPanel() {
-        JPanel panel = new JPanel(new GridLayout(4, 1, 10, 10)); // 버튼 사이 간격 10으로 늘림
+        JPanel panel = new JPanel(new GridLayout(4, 1, 10, 10));
         panel.setBorder(BorderFactory.createTitledBorder("게임 액션"));
-        panel.setPreferredSize(new Dimension(160, 200)); // 너비 약간 넓힘
+        panel.setPreferredSize(new Dimension(160, 200));
         
         hitButton = new JButton("HIT (히트)");
-        decorateButton(hitButton, new Color(46, 204, 113)); // 밝은 초록색
+        decorateButton(hitButton, new Color(46, 204, 113)); // 밝은 초록
 
         standButton = new JButton("STAND (스탠드)");
         decorateButton(standButton, new Color(231, 76, 60)); // 붉은색
 
         doubleDownButton = new JButton("DOUBLE DOWN");
         decorateButton(doubleDownButton, new Color(241, 196, 15)); // 노란색
-        doubleDownButton.setForeground(Color.BLACK); // 노란 배경엔 검은 글씨가 잘 보임
+        doubleDownButton.setForeground(Color.BLACK);
 
         surrenderButton = new JButton("SURRENDER");
         decorateButton(surrenderButton, new Color(149, 165, 166)); // 회색
 
-        // 버튼 기능 연결 (기존과 동일)
         hitButton.addActionListener(e -> sendAction("Hit"));
         standButton.addActionListener(e -> sendAction("Stand"));
         doubleDownButton.addActionListener(e -> sendAction("DoubleDown"));
@@ -230,7 +239,7 @@ public class BlackjackClientGUI extends JFrame {
         
         messageLog = new JTextArea(8, 50);
         messageLog.setEditable(false);
-        messageLog.setFont(new Font("Dialog", Font.PLAIN, 12));
+        messageLog.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
         messageLog.setBackground(new Color(240, 240, 240));
         
         JScrollPane scrollPane = new JScrollPane(messageLog);
@@ -260,6 +269,7 @@ public class BlackjackClientGUI extends JFrame {
             connectButton.setEnabled(false);
             appendLog("서버에 연결되었습니다: " + serverIP + ":" + serverPort);
             
+            // ★ 수정됨: 연결 직후 버튼 상태 갱신
             updateUIState();
             
             // Start listener thread
@@ -303,7 +313,6 @@ public class BlackjackClientGUI extends JFrame {
     private void processServerMessage(String msg) {
         appendLog("[서버] " + msg);
         
-        // Parse server messages
         if (msg.contains("YOUR_TURN")) {
             isMyTurn = true;
             appendLog(">>> 당신의 턴입니다! 액션을 선택하세요.");
@@ -323,7 +332,7 @@ public class BlackjackClientGUI extends JFrame {
             parseInitialDeal(msg);
         } else if (msg.contains("Dealer drew") || msg.contains("DEALER_DRAW")) {
             parseDealerCard(msg);
-        } else if (msg.contains("Hit!") || msg.contains("Drew card")) {
+        } else if (msg.contains("Hit!") || msg.contains("Double Down!")) {
             parsePlayerCard(msg);
         } else if (msg.contains("Your current balance") || msg.contains("Balance after")) {
             parseBalance(msg);
@@ -336,85 +345,82 @@ public class BlackjackClientGUI extends JFrame {
         }
     }
 
+    // ★ 수정됨: 카드 각각 보여주는 로직 적용 (Initial Deal)
     private void parseInitialDeal(String msg) {
-        // Format: "INITIAL_DEAL: Dealer=[X], Your Score=[Y]"
+        // 형식: "INITIAL_DEAL: Dealer=[3], Cards=[10,6], Total=[16]"
         try {
-            String[] parts = msg.split(", ");
-            if (parts.length >= 2) {
-                String dealerPart = parts[0].split("=")[1].replace("]", "");
-                String playerPart = parts[1].split("=")[1].replace("]", "");
-                
-                dealerScore = Integer.parseInt(dealerPart);
-                playerScore = Integer.parseInt(playerPart);
-                
-                addDealerCard(dealerScore);
-                // Initial deal gives 2 cards, but we only see total score
-                // Split into two cards (simplified)
-                int card1 = playerScore / 2;
-                int card2 = playerScore - card1;
-                addPlayerCard(card1);
-                addPlayerCard(card2);
-                
-                updateScores();
+            // 1. 딜러 카드 파싱
+            String dealerPart = msg.substring(msg.indexOf("Dealer=[") + 8);
+            dealerPart = dealerPart.substring(0, dealerPart.indexOf("]"));
+            dealerScore = Integer.parseInt(dealerPart);
+            
+            // 2. 내 카드 목록 파싱
+            String cardsPart = msg.substring(msg.indexOf("Cards=[") + 7);
+            cardsPart = cardsPart.substring(0, cardsPart.indexOf("]"));
+            
+            // 3. 점수 파싱
+            String totalPart = msg.substring(msg.indexOf("Total=[") + 7);
+            totalPart = totalPart.substring(0, totalPart.indexOf("]"));
+            playerScore = Integer.parseInt(totalPart);
+
+            // 화면 그리기
+            clearCards();
+            addDealerCard(dealerScore);
+            
+            String[] cards = cardsPart.split(",");
+            for (String c : cards) {
+                addPlayerCard(Integer.parseInt(c.trim()));
             }
+            
+            updateScores();
+            
         } catch (Exception e) {
-            appendLog("카드 정보 파싱 오류: " + e.getMessage());
+            appendLog("카드 파싱 오류: " + e.getMessage());
         }
     }
 
     private void parseDealerCard(String msg) {
-        // Format: "DEALER_DRAW: Dealer drew a card. (Dealer Score: X)"
         try {
+            // 다양한 형식 지원 (괄호 안 Score 파싱)
             int startIdx = msg.lastIndexOf("Score: ") + 7;
+            if (startIdx < 7) startIdx = msg.lastIndexOf("Score:") + 6;
+            
             int endIdx = msg.indexOf(")", startIdx);
             if (endIdx == -1) endIdx = msg.length();
             
-            int newScore = Integer.parseInt(msg.substring(startIdx, endIdx).trim());
+            String scoreStr = msg.substring(startIdx, endIdx).trim().replaceAll("[^0-9]", "");
+            int newScore = Integer.parseInt(scoreStr);
+            
             int cardValue = newScore - dealerScore;
             dealerScore = newScore;
             addDealerCard(cardValue);
             updateScores();
         } catch (Exception e) {
-            // Try alternative parsing
-            try {
-                String[] parts = msg.split(":");
-                for (String part : parts) {
-                    if (part.contains("Score")) {
-                        String[] scoreParts = part.split("Score");
-                        if (scoreParts.length > 1) {
-                            String scoreStr = scoreParts[1].trim().replaceAll("[^0-9]", "");
-                            dealerScore = Integer.parseInt(scoreStr);
-                            updateScores();
-                            break;
-                        }
-                    }
-                }
-            } catch (Exception e2) {}
+             // 딜러 드로우 파싱 실패 시 조용히 넘어감 (로그만 남김)
+             // appendLog("딜러 카드 파싱 오류: " + e.getMessage());
         }
     }
 
+    // ★ 수정됨: 카드 각각 보여주는 로직 적용 (Hit / DoubleDown)
     private void parsePlayerCard(String msg) {
-        // Format: "Hit! (Current Score: X)" or "Drew card: Y -> Final Score: X"
+        // 형식: "Hit! (Draw: 5, Score: 21)"
         try {
-            if (msg.contains("->")) {
-                String[] parts = msg.split("->");
-                String cardPart = parts[0].split(":")[1].trim();
-                String scorePart = parts[1].split(":")[1].trim();
+            if (msg.contains("Draw:")) {
+                int drawIndex = msg.indexOf("Draw:") + 5;
+                int commaIndex = msg.indexOf(",", drawIndex);
+                if (commaIndex == -1) commaIndex = msg.indexOf(")", drawIndex);
                 
-                int cardValue = Integer.parseInt(cardPart.replaceAll("[^0-9]", ""));
-                playerScore = Integer.parseInt(scorePart.replaceAll("[^0-9]", ""));
-                addPlayerCard(cardValue);
-            } else {
-                int startIdx = msg.indexOf("Score: ") + 7;
-                int endIdx = msg.indexOf(")", startIdx);
-                if (endIdx == -1) endIdx = msg.length();
+                String cardStr = msg.substring(drawIndex, commaIndex).trim();
+                int cardValue = Integer.parseInt(cardStr);
                 
-                int newScore = Integer.parseInt(msg.substring(startIdx, endIdx).trim());
-                int cardValue = newScore - playerScore;
-                playerScore = newScore;
+                int scoreIndex = msg.indexOf("Score:") + 6;
+                int endParenIndex = msg.indexOf(")", scoreIndex);
+                String scoreStr = msg.substring(scoreIndex, endParenIndex).trim();
+                
+                playerScore = Integer.parseInt(scoreStr);
                 addPlayerCard(cardValue);
+                updateScores();
             }
-            updateScores();
         } catch (Exception e) {
             appendLog("플레이어 카드 파싱 오류: " + e.getMessage());
         }
@@ -459,36 +465,21 @@ public class BlackjackClientGUI extends JFrame {
         playerCardsPanel.repaint();
     }
 
+    // ★ 디자인 개선: 카드 모양 예쁘게
     private JLabel createCardLabel(int value, Color bgColor, Color textColor) {
         JLabel label = new JLabel(String.valueOf(value), JLabel.CENTER);
-        
-        // 1. 카드 크기 키우기 (가로 80, 세로 110)
-        label.setPreferredSize(new Dimension(80, 110)); 
+        label.setPreferredSize(new Dimension(80, 110));
         label.setOpaque(true);
         label.setBackground(bgColor);
         label.setForeground(textColor);
-        
-        // 2. 폰트 키우기 (24포인트, 굵게)
-        label.setFont(new Font("Dialog", Font.BOLD, 24)); 
-        
-        // 3. 테두리와 안쪽 여백(Padding) 동시에 주기
-        // 바깥쪽은 검은색 선, 안쪽은 5픽셀 여백
+        label.setFont(new Font("맑은 고딕", Font.BOLD, 24));
         label.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(Color.BLACK, 2),
             BorderFactory.createEmptyBorder(5, 5, 5, 5)
         ));
-        
         return label;
     }
 
-    private void decorateButton(JButton btn, Color bg) {
-        btn.setBackground(bg);
-        btn.setForeground(Color.WHITE);
-        btn.setFocusPainted(false); // 클릭했을 때 생기는 지저분한 테두리 제거
-        btn.setFont(new Font("Dialog ", Font.BOLD, 14)); // 폰트 설정
-        btn.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0)); // 버튼 높이 늘리기 (여백)
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR)); // 마우스 올리면 손가락 모양
-    }
     private void clearCards() {
         dealerCardLabels.clear();
         playerCardLabels.clear();
@@ -553,8 +544,12 @@ public class BlackjackClientGUI extends JFrame {
         }
     }
 
+    // ★ 수정됨: 버튼 활성화 로직 개선 (강제 활성화 포함)
     private void updateUIState() {
-        // Enable/disable buttons based on game state
+        // 연결 여부에 따라 게임 시작 버튼 활성화
+        startGameButton.setEnabled(isConnected && !isBettingPhase && !isMyTurn);
+        betButton.setEnabled(isConnected && isBettingPhase);
+        
         boolean canAct = isConnected && isMyTurn && !isBettingPhase;
         
         hitButton.setEnabled(canAct);
@@ -562,10 +557,6 @@ public class BlackjackClientGUI extends JFrame {
         doubleDownButton.setEnabled(canAct);
         surrenderButton.setEnabled(canAct);
         
-        startGameButton.setEnabled(isConnected && !isBettingPhase && !isMyTurn);
-        betButton.setEnabled(isConnected && isBettingPhase);
-        
-        // Visual feedback
         if (isMyTurn) {
             gameStatusLabel.setText("당신의 턴");
             gameStatusLabel.setForeground(Color.YELLOW);
