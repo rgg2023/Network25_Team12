@@ -206,29 +206,40 @@ public class GameRoom {
             String resultMsg;
             int pScore = p.getScore();
             int bet = p.getCurrentBet();
+            String status = ""; // 승패 상태 (WIN, LOSE, TIE)
 
             if (p.isSurrender()) {
                 int returnMoney = bet / 2;
                 p.increaseBalance(returnMoney);
                 resultMsg = "Surrender (Given up: " + returnMoney + " returned)";
+                status = "LOSE"; // 서렌더는 패배 처리
             } else if (pScore > 21) {
                 resultMsg = "Lose (Bust)";
+                status = "LOSE";
             } else if (dealerScore > 21) {
                 int prize = bet * 2;
                 p.increaseBalance(prize);
                 resultMsg = "Win! (Dealer Bust) - Prize: " + prize;
+                status = "WIN";
             } else if (pScore > dealerScore) {
                 int prize = bet * 2;
                 p.increaseBalance(prize);
                 resultMsg = "Win! (" + pScore + " vs " + dealerScore + ") - Prize: " + prize;
+                status = "WIN";
             } else if (pScore == dealerScore) {
                 p.increaseBalance(bet);
                 resultMsg = "Tie (Push)";
+                status = "TIE";
             } else {
                 resultMsg = "Lose (" + pScore + " vs " + dealerScore + ") - Bet lost.";
+                status = "LOSE";
             }
+            
             broadcast(p.getPlayerId() + ": " + resultMsg);
             p.sendMessage("INFO: Balance after settlement: [" + p.getBalance() + "]");
+            
+            // ★ 핵심: 승패 결과를 명확한 신호로 따로 보내줍니다!
+            p.sendMessage("GAME_RESULT:" + status);
         }
         
         isGameStarted = false;

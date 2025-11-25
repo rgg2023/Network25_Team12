@@ -49,6 +49,8 @@ public class BlackjackClientGUI extends JFrame {
     private boolean isConnected = false;
     private boolean isMyTurn = false;
     private boolean isBettingPhase = false;
+    private String lastGameResult = ""; 
+    private Color lastResultColor = Color.BLACK;
     
     private List<JLabel> dealerCardLabels = new ArrayList<>();
     private List<JLabel> playerCardLabels = new ArrayList<>();
@@ -323,9 +325,11 @@ public class BlackjackClientGUI extends JFrame {
         } else if (msg.contains("GAME_PHASE: Betting Phase")) {
             isBettingPhase = true;
             isMyTurn = false;
+            lastGameResult = ""; // ★ 새 게임 시작하면 결과 텍스트 초기화
             updateUIState();
         } else if (msg.contains("ROUND_START")) {
             isBettingPhase = false;
+            lastGameResult = ""; // ★ 라운드 시작하면 결과 텍스트 초기화
             clearCards();
             updateUIState();
         } else if (msg.contains("INITIAL_DEAL")) {
@@ -341,6 +345,21 @@ public class BlackjackClientGUI extends JFrame {
         } else if (msg.contains("GAME_END")) {
             isMyTurn = false;
             isBettingPhase = false;
+            updateUIState();
+            
+        // ★ 핵심: 승패 신호를 받으면 변수에 저장하고 화면 갱신
+        } else if (msg.startsWith("GAME_RESULT:")) {
+            String result = msg.split(":")[1].trim();
+            if (result.equals("WIN")) {
+                lastGameResult = "WIN!";
+                lastResultColor = Color.decode("#e7bb54"); // 황금색
+            } else if (result.equals("LOSE")) {
+                lastGameResult = "LOSE...";
+                lastResultColor = Color.decode("#4d3add"); // 보라색
+            } else if (result.equals("TIE")) {
+                lastGameResult = "TIE (PUSH)";
+                lastResultColor = Color.WHITE;
+            }
             updateUIState();
         }
     }
@@ -546,7 +565,6 @@ public class BlackjackClientGUI extends JFrame {
 
     // ★ 수정됨: 버튼 활성화 로직 개선 (강제 활성화 포함)
     private void updateUIState() {
-        // 연결 여부에 따라 게임 시작 버튼 활성화
         startGameButton.setEnabled(isConnected && !isBettingPhase && !isMyTurn);
         betButton.setEnabled(isConnected && isBettingPhase);
         
@@ -557,12 +575,17 @@ public class BlackjackClientGUI extends JFrame {
         doubleDownButton.setEnabled(canAct);
         surrenderButton.setEnabled(canAct);
         
+        // 상태 메시지 우선순위 처리
         if (isMyTurn) {
             gameStatusLabel.setText("당신의 턴");
             gameStatusLabel.setForeground(Color.YELLOW);
         } else if (isBettingPhase) {
             gameStatusLabel.setText("베팅 단계");
             gameStatusLabel.setForeground(Color.ORANGE);
+        } else if (!lastGameResult.isEmpty()) { 
+            // ★ 게임 결과가 있으면 그걸 보여줍니다 (WIN! / LOSE...)
+            gameStatusLabel.setText(lastGameResult);
+            gameStatusLabel.setForeground(lastResultColor);
         } else if (isConnected) {
             gameStatusLabel.setText("연결됨");
             gameStatusLabel.setForeground(Color.GREEN);
