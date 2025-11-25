@@ -116,34 +116,44 @@ public class BlackjackClientGUI extends JFrame {
     private JPanel createGameBoard() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder("게임 보드"));
-        panel.setBackground(new Color(34, 139, 34)); // 카지노 그린
+        
+        // ★ 색상 변경: 조금 더 진하고 고급스러운 펠트지 색깔
+        Color tableColor = new Color(0, 102, 51); 
+        
+        panel.setBackground(tableColor); 
         
         // 딜러 영역
         JPanel dealerSection = new JPanel(new BorderLayout());
-        dealerSection.setBackground(new Color(34, 139, 34));
-        dealerSection.setBorder(BorderFactory.createTitledBorder("딜러"));
+        dealerSection.setBackground(tableColor); // 같은 색 적용
+        dealerSection.setBorder(BorderFactory.createTitledBorder(null, "딜러", 
+            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, 
+            javax.swing.border.TitledBorder.DEFAULT_POSITION, 
+            new Font("Dialog", Font.BOLD, 12), Color.WHITE)); // 타이틀도 흰색으로
         
         dealerScoreLabel = new JLabel("점수: -", JLabel.CENTER);
-        dealerScoreLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        dealerScoreLabel.setFont(new Font("Dialog", Font.BOLD, 18)); // 폰트 키움
         dealerScoreLabel.setForeground(Color.WHITE);
         dealerSection.add(dealerScoreLabel, BorderLayout.NORTH);
         
-        dealerCardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        dealerCardsPanel.setBackground(new Color(34, 139, 34));
+        dealerCardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15)); // 카드 사이 간격 넓힘
+        dealerCardsPanel.setBackground(tableColor);
         dealerSection.add(dealerCardsPanel, BorderLayout.CENTER);
         
         // 플레이어 영역
         JPanel playerSection = new JPanel(new BorderLayout());
-        playerSection.setBackground(new Color(34, 139, 34));
-        playerSection.setBorder(BorderFactory.createTitledBorder("플레이어"));
+        playerSection.setBackground(tableColor);
+        playerSection.setBorder(BorderFactory.createTitledBorder(null, "플레이어", 
+            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, 
+            javax.swing.border.TitledBorder.DEFAULT_POSITION, 
+            new Font("Dialog", Font.BOLD, 12), Color.WHITE));
         
         playerScoreLabel = new JLabel("점수: -", JLabel.CENTER);
-        playerScoreLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        playerScoreLabel.setFont(new Font("Dialog", Font.BOLD, 18));
         playerScoreLabel.setForeground(Color.WHITE);
         playerSection.add(playerScoreLabel, BorderLayout.NORTH);
         
-        playerCardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        playerCardsPanel.setBackground(new Color(34, 139, 34));
+        playerCardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
+        playerCardsPanel.setBackground(tableColor);
         playerSection.add(playerCardsPanel, BorderLayout.CENTER);
         
         panel.add(dealerSection, BorderLayout.NORTH);
@@ -158,11 +168,11 @@ public class BlackjackClientGUI extends JFrame {
         panel.setPreferredSize(new Dimension(200, 200));
         
         balanceLabel = new JLabel("잔액: " + balance);
-        balanceLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        balanceLabel.setFont(new Font("Dialog", Font.BOLD, 14));
         panel.add(balanceLabel);
         
         currentBetLabel = new JLabel("현재 베팅: " + currentBet);
-        currentBetLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        currentBetLabel.setFont(new Font("Dialog", Font.BOLD, 14));
         panel.add(currentBetLabel);
         
         panel.add(new JLabel("")); // 공간
@@ -183,32 +193,27 @@ public class BlackjackClientGUI extends JFrame {
     }
 
     private JPanel createActionPanel() {
-        JPanel panel = new JPanel(new GridLayout(4, 1, 5, 5));
+        JPanel panel = new JPanel(new GridLayout(4, 1, 10, 10)); // 버튼 사이 간격 10으로 늘림
         panel.setBorder(BorderFactory.createTitledBorder("게임 액션"));
-        panel.setPreferredSize(new Dimension(150, 200));
+        panel.setPreferredSize(new Dimension(160, 200)); // 너비 약간 넓힘
         
         hitButton = new JButton("HIT (히트)");
-        hitButton.setFont(new Font("Arial", Font.BOLD, 14));
-        hitButton.setBackground(new Color(0, 150, 0));
-        hitButton.setForeground(Color.WHITE);
-        hitButton.addActionListener(e -> sendAction("Hit"));
-        
+        decorateButton(hitButton, new Color(46, 204, 113)); // 밝은 초록색
+
         standButton = new JButton("STAND (스탠드)");
-        standButton.setFont(new Font("Arial", Font.BOLD, 14));
-        standButton.setBackground(new Color(200, 0, 0));
-        standButton.setForeground(Color.WHITE);
-        standButton.addActionListener(e -> sendAction("Stand"));
-        
+        decorateButton(standButton, new Color(231, 76, 60)); // 붉은색
+
         doubleDownButton = new JButton("DOUBLE DOWN");
-        doubleDownButton.setFont(new Font("Arial", Font.BOLD, 12));
-        doubleDownButton.setBackground(new Color(200, 150, 0));
-        doubleDownButton.setForeground(Color.WHITE);
-        doubleDownButton.addActionListener(e -> sendAction("DoubleDown"));
-        
+        decorateButton(doubleDownButton, new Color(241, 196, 15)); // 노란색
+        doubleDownButton.setForeground(Color.BLACK); // 노란 배경엔 검은 글씨가 잘 보임
+
         surrenderButton = new JButton("SURRENDER");
-        surrenderButton.setFont(new Font("Arial", Font.BOLD, 12));
-        surrenderButton.setBackground(new Color(100, 100, 100));
-        surrenderButton.setForeground(Color.WHITE);
+        decorateButton(surrenderButton, new Color(149, 165, 166)); // 회색
+
+        // 버튼 기능 연결 (기존과 동일)
+        hitButton.addActionListener(e -> sendAction("Hit"));
+        standButton.addActionListener(e -> sendAction("Stand"));
+        doubleDownButton.addActionListener(e -> sendAction("DoubleDown"));
         surrenderButton.addActionListener(e -> sendAction("Surrender"));
         
         panel.add(hitButton);
@@ -225,7 +230,7 @@ public class BlackjackClientGUI extends JFrame {
         
         messageLog = new JTextArea(8, 50);
         messageLog.setEditable(false);
-        messageLog.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        messageLog.setFont(new Font("Dialog", Font.PLAIN, 12));
         messageLog.setBackground(new Color(240, 240, 240));
         
         JScrollPane scrollPane = new JScrollPane(messageLog);
@@ -454,15 +459,34 @@ public class BlackjackClientGUI extends JFrame {
 
     private JLabel createCardLabel(int value, Color bgColor, Color textColor) {
         JLabel label = new JLabel(String.valueOf(value), JLabel.CENTER);
-        label.setPreferredSize(new Dimension(60, 90));
+        
+        // 1. 카드 크기 키우기 (가로 80, 세로 110)
+        label.setPreferredSize(new Dimension(80, 110)); 
         label.setOpaque(true);
         label.setBackground(bgColor);
         label.setForeground(textColor);
-        label.setFont(new Font("Arial", Font.BOLD, 20));
-        label.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+        
+        // 2. 폰트 키우기 (24포인트, 굵게)
+        label.setFont(new Font("Dialog", Font.BOLD, 24)); 
+        
+        // 3. 테두리와 안쪽 여백(Padding) 동시에 주기
+        // 바깥쪽은 검은색 선, 안쪽은 5픽셀 여백
+        label.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.BLACK, 2),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        ));
+        
         return label;
     }
 
+    private void decorateButton(JButton btn, Color bg) {
+        btn.setBackground(bg);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false); // 클릭했을 때 생기는 지저분한 테두리 제거
+        btn.setFont(new Font("Dialog ", Font.BOLD, 14)); // 폰트 설정
+        btn.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0)); // 버튼 높이 늘리기 (여백)
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR)); // 마우스 올리면 손가락 모양
+    }
     private void clearCards() {
         dealerCardLabels.clear();
         playerCardLabels.clear();
