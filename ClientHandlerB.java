@@ -2,6 +2,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ClientHandlerB implements Runnable {
     private Socket socket;
@@ -13,7 +15,7 @@ public class ClientHandlerB implements Runnable {
     private String playerId;
     private int balance = 1000; // Initial Balance
     private int currentBet = 0;
-    private int score = 0;
+    private List<Card> cards = new ArrayList<>(); // 플레이어의 카드 리스트
 
     private boolean isBetPlaced = false; // Check if bet is placed
     private boolean isSurrender = false; // Check if surrendered
@@ -71,7 +73,7 @@ public class ClientHandlerB implements Runnable {
     }
 
     public void resetRound() {
-        this.score = 0;
+        this.cards.clear();
         this.currentBet = 0;
         this.isBetPlaced = false; // Reset
         this.isSurrender = false; // Reset
@@ -89,8 +91,14 @@ public class ClientHandlerB implements Runnable {
     public void decreaseBalance(int amount) { this.balance -= amount; }
     public int getCurrentBet() { return currentBet; }
     public void setCurrentBet(int amount) { this.currentBet = amount; }
-    public void addCardScore(int score) { this.score += score; }
-    public int getScore() { return score; }
-    public void resetScoreOnly() { this.score = 0; }
     public void increaseBalance(int amount) { this.balance += amount; }
+    
+    // 카드 관련 메서드
+    public List<Card> getCards() { return cards; }
+    public void addCard(Card card) { this.cards.add(card); }
+    public int getScore() { return BlackjackScoreCalculator.calculateScore(cards); }
+    public void resetScoreOnly() { this.cards.clear(); }
+    public boolean isSoftHand() { return BlackjackScoreCalculator.isSoftHand(cards); }
+    public boolean isBust() { return BlackjackScoreCalculator.isBust(cards); }
+    public boolean isBlackjack() { return BlackjackScoreCalculator.isBlackjack(cards); }
 }

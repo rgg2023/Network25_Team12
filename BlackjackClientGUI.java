@@ -330,6 +330,8 @@ public class BlackjackClientGUI extends JFrame {
             clearCards();
             resultLabel.setText("");
             updateUIState();
+        } else if (msg.contains("INFO: Dealer's open card")) {
+            parseDealerInitialCard(msg);
         } else if (msg.contains("INITIAL_DEAL")) {
             parseInitialDeal(msg);
         } else if (msg.contains("Dealer drew") || msg.contains("DEALER_DRAW")) {
@@ -360,25 +362,47 @@ public class BlackjackClientGUI extends JFrame {
         }
     }
 
+    private void parseDealerInitialCard(String msg) {
+        try {
+            // 형식: "INFO: Dealer's open card: [A] (Score: 11)"
+            int cardStartIdx = msg.indexOf("[") + 1;
+            int cardEndIdx = msg.indexOf("]", cardStartIdx);
+            if (cardEndIdx > cardStartIdx) {
+                String cardName = msg.substring(cardStartIdx, cardEndIdx).trim();
+                
+                // 점수도 파싱
+                int scoreStartIdx = msg.indexOf("Score:") + 6;
+                int scoreEndIdx = msg.indexOf(")", scoreStartIdx);
+                if (scoreEndIdx > scoreStartIdx) {
+                    String scoreStr = msg.substring(scoreStartIdx, scoreEndIdx).trim();
+                    dealerScore = Integer.parseInt(scoreStr);
+                }
+                
+                // 딜러 카드가 이미 초기화되어 있지 않으면 추가
+                if (dealerCardLabels.isEmpty()) {
+                    clearCards();
+                    addDealerCard(cardName);
+                    updateScores();
+                }
+            }
+        } catch (Exception e) {}
+    }
+
     private void parseInitialDeal(String msg) {
         try {
-            String dealerPart = msg.substring(msg.indexOf("Dealer=[") + 8);
-            dealerPart = dealerPart.substring(0, dealerPart.indexOf("]"));
-            dealerScore = Integer.parseInt(dealerPart);
-            
+            // Cards 파싱 (예: "Cards=[A,7]")
             String cardsPart = msg.substring(msg.indexOf("Cards=[") + 7);
             cardsPart = cardsPart.substring(0, cardsPart.indexOf("]"));
             
+            // Total 점수 파싱
             String totalPart = msg.substring(msg.indexOf("Total=[") + 7);
             totalPart = totalPart.substring(0, totalPart.indexOf("]"));
             playerScore = Integer.parseInt(totalPart);
 
-            clearCards();
-            addDealerCard(dealerScore);
-            
+            // 플레이어 카드 추가
             String[] cards = cardsPart.split(",");
             for (String c : cards) {
-                addPlayerCard(Integer.parseInt(c.trim()));
+                addPlayerCard(c.trim()); // 카드 이름을 그대로 전달
             }
             updateScores();
             
@@ -389,38 +413,56 @@ public class BlackjackClientGUI extends JFrame {
 
     private void parseDealerCard(String msg) {
         try {
-            int startIdx = msg.lastIndexOf("Score: ") + 7;
-            if (startIdx < 7) startIdx = msg.lastIndexOf("Score:") + 6;
+            // 형식: "DEALER_DRAW: Dealer drew [A]. (Dealer Score: 11)"
+            int cardStartIdx = msg.indexOf("[") + 1;
+            int cardEndIdx = msg.indexOf("]", cardStartIdx);
+            if (cardEndIdx > cardStartIdx) {
+                String cardName = msg.substring(cardStartIdx, cardEndIdx).trim();
+                addDealerCard(cardName);
+            }
             
-            int endIdx = msg.indexOf(")", startIdx);
-            if (endIdx == -1) endIdx = msg.length();
+            // 점수 업데이트
+            int scoreStartIdx = msg.lastIndexOf("Score: ") + 7;
+            if (scoreStartIdx < 7) scoreStartIdx = msg.lastIndexOf("Score:") + 6;
             
-            String scoreStr = msg.substring(startIdx, endIdx).trim().replaceAll("[^0-9]", "");
-            int newScore = Integer.parseInt(scoreStr);
+            int scoreEndIdx = msg.indexOf(")", scoreStartIdx);
+            if (scoreEndIdx == -1) scoreEndIdx = msg.length();
             
-            int cardValue = newScore - dealerScore;
-            dealerScore = newScore;
-            addDealerCard(cardValue);
-            updateScores();
+            String scoreStr = msg.substring(scoreStartIdx, scoreEndIdx).trim().replaceAll("[^0-9]", "");
+            if (!scoreStr.isEmpty()) {
+                dealerScore = Integer.parseInt(scoreStr);
+                updateScores();
+            }
         } catch (Exception e) {}
     }
 
     private void parsePlayerCard(String msg) {
         try {
+            // 형식: "Hit! (Draw: A, Score: 18)" 또는 "Double Down! (Draw: K, Final Score: 20)"
             if (msg.contains("Draw:")) {
                 int drawIndex = msg.indexOf("Draw:") + 5;
                 int commaIndex = msg.indexOf(",", drawIndex);
-                if (commaIndex == -1) commaIndex = msg.indexOf(")", drawIndex);
+                int scoreIndex = msg.indexOf("Score:");
                 
-                String cardStr = msg.substring(drawIndex, commaIndex).trim();
-                int cardValue = Integer.parseInt(cardStr);
+                String cardName;
+                if (commaIndex != -1 && commaIndex < scoreIndex) {
+                    cardName = msg.substring(drawIndex, commaIndex).trim();
+                } else {
+                    // Score 전까지가 카드 이름
+                    cardName = msg.substring(drawIndex, scoreIndex).trim();
+                }
                 
-                int scoreIndex = msg.indexOf("Score:") + 6;
-                int endParenIndex = msg.indexOf(")", scoreIndex);
-                String scoreStr = msg.substring(scoreIndex, endParenIndex).trim();
+                // 점수 파싱
+                int scoreStartIdx = msg.indexOf("Score:") + 6;
+                int endParenIndex = msg.indexOf(")", scoreStartIdx);
+                if (endParenIndex == -1) endParenIndex = msg.length();
                 
-                playerScore = Integer.parseInt(scoreStr);
-                addPlayerCard(cardValue);
+                String scoreStr = msg.substring(scoreStartIdx, endParenIndex).trim().replaceAll("[^0-9]", "");
+                if (!scoreStr.isEmpty()) {
+                    playerScore = Integer.parseInt(scoreStr);
+                }
+                
+                addPlayerCard(cardName);
                 updateScores();
             }
         } catch (Exception e) {
@@ -450,45 +492,47 @@ public class BlackjackClientGUI extends JFrame {
             }
         } catch (Exception e) {}
     }
+    
+    private void addDealerCard(String cardName) {
+        if (cardName == null || cardName.isEmpty()) return;
 
-    private void addDealerCard(int value) {
-        JLabel cardLabel = createCardLabel(value, Color.WHITE, Color.BLACK);
+        JLabel cardLabel = createCardLabel(cardName, Color.WHITE, Color.BLACK);
         dealerCardLabels.add(cardLabel);
         dealerCardsPanel.add(cardLabel);
         dealerCardsPanel.revalidate();
         dealerCardsPanel.repaint();
     }
 
-    private void addPlayerCard(int value) {
-        JLabel cardLabel = createCardLabel(value, Color.WHITE, Color.BLUE);
+    private void addPlayerCard(String cardName) {
+        if (cardName == null || cardName.isEmpty()) return;
+        
+        JLabel cardLabel = createCardLabel(cardName, Color.WHITE, Color.BLUE);
         playerCardLabels.add(cardLabel);
         playerCardsPanel.add(cardLabel);
         playerCardsPanel.revalidate();
         playerCardsPanel.repaint();
     }
 
-    private JLabel createCardLabel(int value, Color bgColor, Color textColor) {
-        // ★ 핵심: 값이 0이면 숫자를 빈 문자열("")로 바꿔서 안 보이게 함
-        String text = (value == 0) ? "" : String.valueOf(value);
+    private JLabel createCardLabel(String cardName, Color bgColor, Color textColor) {
+        JLabel label = new JLabel(cardName, JLabel.CENTER);
         
-        JLabel label = new JLabel(text, JLabel.CENTER);
         label.setPreferredSize(new Dimension(80, 110));
         label.setOpaque(true);
-        label.setFont(new Font("맑은 고딕", Font.BOLD, 24));
+        label.setBackground(bgColor);
+        label.setForeground(textColor);
         
-        if (value == 0) {
-            // ★ 0인 경우: 카드 뒷면처럼 꾸미기 (숫자 X, 짙은 빨간색 배경)
-            label.setBackground(new Color(100, 0, 0)); // Dark Red
-            label.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220), 2));
+        // 에이스나 페이스 카드는 더 큰 폰트 사용
+        if (cardName.equals("A") || cardName.equals("J") || cardName.equals("Q") || cardName.equals("K")) {
+            label.setFont(new Font("맑은 고딕", Font.BOLD, 32));
         } else {
-            // 0이 아닌 경우: 정상적인 카드 (숫자 O, 흰색 배경)
-            label.setBackground(bgColor);
-            label.setForeground(textColor);
-            label.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.BLACK, 2),
-                BorderFactory.createEmptyBorder(5, 5, 5, 5)
-            ));
+            label.setFont(new Font("맑은 고딕", Font.BOLD, 24));
         }
+        
+        // 모든 카드에 똑같은 테두리 적용
+        label.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.BLACK, 2),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        ));
         
         return label;
     }

@@ -8,7 +8,7 @@ public class GameRoom {
     private boolean isBettingPhase = false;
 
     // Dealer Information
-    private int dealerScore = 0;
+    private List<Card> dealerCards = new ArrayList<>();
 
     public synchronized void join(ClientHandlerB player) {
         players.add(player);
@@ -79,32 +79,41 @@ public class GameRoom {
         startRound();
     }
 
-    // ★ 수정됨: 카드 2장을 각각 알려주는 로직 적용
     private void startRound() {
         isBettingPhase = false;
         isGameStarted = true;
         currentPlayerIndex = 0;
-        dealerScore = 0;
+        dealerCards.clear();
 
         broadcast("------------------------------------------------");
         broadcast("ROUND_START: Betting closed! The game begins.");
 
-        dealerScore = drawCard();
-        broadcast("INFO: Dealer's open card: [" + dealerScore + "]");
+        // 딜러 카드 1장 뽑기
+        Card dealerCard = Card.drawRandom();
+        dealerCards.add(dealerCard);
+        int dealerScore = BlackjackScoreCalculator.calculateScore(dealerCards);
+        broadcast("INFO: Dealer's open card: [" + dealerCard.getDisplayName() + "] (Score: " + dealerScore + ")");
 
+        // 각 플레이어에게 카드 2장씩 나눠주기
         for (ClientHandlerB p : players) {
             p.resetScoreOnly();
             
-            int c1 = drawCard();
-            int c2 = drawCard();
+            Card c1 = Card.drawRandom();
+            Card c2 = Card.drawRandom();
             
-            p.addCardScore(c1 + c2);
-
-            // ★ 수정됨: 카드 각각 전송
-            p.sendMessage("INITIAL_DEAL: Dealer=[" + dealerScore + "], Cards=[" + c1 + "," + c2 + "], Total=[" + p.getScore() + "]");
+            p.addCard(c1);
+            p.addCard(c2);
             
-            if (p.getScore() == 21) {
+            int playerScore = p.getScore();
+            
+            // 카드 정보 전송 (A, J, Q, K 표시 포함)
+            String cardsStr = c1.getDisplayName() + "," + c2.getDisplayName();
+            p.sendMessage("INITIAL_DEAL: Dealer=[" + dealerCard.getDisplayName() + "], Cards=[" + cardsStr + "], Total=[" + playerScore + "]");
+            
+            if (p.isBlackjack()) {
                 p.sendMessage("INFO: Blackjack! (21 points)");
+            } else if (p.isSoftHand()) {
+                p.sendMessage("INFO: Soft Hand (Ace can be 11)");
             }
         }
         
@@ -125,23 +134,28 @@ public class GameRoom {
         }
 
         if (action.equalsIgnoreCase("Hit")) {
-            int card = drawCard();
-            player.addCardScore(card);
+            Card card = Card.drawRandom();
+            player.addCard(card);
             
-            // 1. 카드를 뽑았다고 알림
-            broadcast("ACTION: [" + player.getPlayerId() + "] Hit! (Draw: " + card + ", Score: " + player.getScore() + ")");
+            int playerScore = player.getScore();
+            
+            // 카드를 뽑았다고 알림
+            broadcast("ACTION: [" + player.getPlayerId() + "] Hit! (Draw: " + card.getDisplayName() + ", Score: " + playerScore + ")");
 
-            // 2. 점수 체크
-            if (player.getScore() > 21) {
+            // 점수 체크
+            if (player.isBust()) {
                 broadcast("RESULT: [" + player.getPlayerId() + "] BUST! (Over 21)");
-                nextTurn(); // 21점 넘으면 다음 사람 턴으로
+                nextTurn();
             } else {
-                // ★★★ 21점을 안 넘었으면 다시 턴을 줌 (버튼 활성화용)
+                // 21점을 안 넘었으면 다시 턴을 줌
+                if (player.isSoftHand()) {
+                    player.sendMessage("INFO: Soft Hand - You can hit safely!");
+                }
                 player.sendMessage("YOUR_TURN: Choose action (HIT, STAND, DOUBLEDOWN, SURRENDER).");
             }
             
-        } else if (action.equalsIgnoreCase("Stand")) { // ★ 중괄호 오류 수정됨
-            broadcast("ACTION: [" + player.getPlayerId() + "] Stand. (Turn Ended)");
+        } else if (action.equalsIgnoreCase("Stand")) {
+            broadcast("ACTION: [" + player.getPlayerId() + "] Stand. (Final Score: " + player.getScore() + ")");
             nextTurn();
         } else if (action.equalsIgnoreCase("DoubleDown")) {
             if (player.getBalance() < player.getCurrentBet()) {
@@ -152,13 +166,13 @@ public class GameRoom {
             player.decreaseBalance(additionalBet);
             player.setCurrentBet(player.getCurrentBet() + additionalBet);
             
-            int card = drawCard();
-            player.addCardScore(card);
+            Card card = Card.drawRandom();
+            player.addCard(card);
             
-            // ★ 수정됨: 뽑은 카드(Draw)를 보여줌
-            broadcast("ACTION: [" + player.getPlayerId() + "] Double Down! (Draw: " + card + ", Final Score: " + player.getScore() + ")");
+            int finalScore = player.getScore();
+            broadcast("ACTION: [" + player.getPlayerId() + "] Double Down! (Draw: " + card.getDisplayName() + ", Final Score: " + finalScore + ")");
 
-            if (player.getScore() > 21) {
+            if (player.isBust()) {
                 broadcast("RESULT: [" + player.getPlayerId() + "] BUST! (Lost)");
             }
             nextTurn();
@@ -186,13 +200,16 @@ public class GameRoom {
     }
 
     private void playDealerTurn() {
+        int dealerScore = BlackjackScoreCalculator.calculateScore(dealerCards);
         broadcast("DEALER_TURN: All player turns ended. Dealer draws cards. (Current: " + dealerScore + ")");
         try { Thread.sleep(1000); } catch (Exception e) {}
 
+        // 딜러는 17 이상이 될 때까지 카드를 받음 (Soft 17 포함)
         while (dealerScore < 17) {
-            int card = drawCard();
-            dealerScore += card;
-            broadcast("DEALER_DRAW: Dealer drew a card. (Dealer Score: " + dealerScore + ")");
+            Card card = Card.drawRandom();
+            dealerCards.add(card);
+            dealerScore = BlackjackScoreCalculator.calculateScore(dealerCards);
+            broadcast("DEALER_DRAW: Dealer drew [" + card.getDisplayName() + "]. (Dealer Score: " + dealerScore + ")");
             try { Thread.sleep(1000); } catch (Exception e) {}
         }
         calculateResults();
@@ -200,7 +217,8 @@ public class GameRoom {
 
     private void calculateResults() {
         broadcast("--- [Final Results] ---");
-        broadcast("Dealer Final Score: " + dealerScore);
+        int dealerFinalScore = BlackjackScoreCalculator.calculateScore(dealerCards);
+        broadcast("Dealer Final Score: " + dealerFinalScore);
 
         for (ClientHandlerB p : players) {
             String resultMsg;
@@ -212,42 +230,42 @@ public class GameRoom {
                 int returnMoney = bet / 2;
                 p.increaseBalance(returnMoney);
                 resultMsg = "Surrender (Given up: " + returnMoney + " returned)";
-                status = "LOSE"; // 서렌더는 패배 처리
-            } else if (pScore > 21) {
+                status = "LOSE";
+            } else if (p.isBust()) {
                 resultMsg = "Lose (Bust)";
                 status = "LOSE";
-            } else if (dealerScore > 21) {
+            } else if (dealerFinalScore > 21) {
                 int prize = bet * 2;
                 p.increaseBalance(prize);
                 resultMsg = "Win! (Dealer Bust) - Prize: " + prize;
                 status = "WIN";
-            } else if (pScore > dealerScore) {
+            } else if (p.isBlackjack() && dealerFinalScore != 21) {
+                // 블랙잭 승리 (보통 2.5배 지급, 여기서는 2배로)
+                int prize = (int)(bet * 2.5);
+                p.increaseBalance(prize);
+                resultMsg = "Blackjack Win! (" + pScore + " vs " + dealerFinalScore + ") - Prize: " + prize;
+                status = "WIN";
+            } else if (pScore > dealerFinalScore) {
                 int prize = bet * 2;
                 p.increaseBalance(prize);
-                resultMsg = "Win! (" + pScore + " vs " + dealerScore + ") - Prize: " + prize;
+                resultMsg = "Win! (" + pScore + " vs " + dealerFinalScore + ") - Prize: " + prize;
                 status = "WIN";
-            } else if (pScore == dealerScore) {
+            } else if (pScore == dealerFinalScore) {
                 p.increaseBalance(bet);
                 resultMsg = "Tie (Push)";
                 status = "TIE";
             } else {
-                resultMsg = "Lose (" + pScore + " vs " + dealerScore + ") - Bet lost.";
+                resultMsg = "Lose (" + pScore + " vs " + dealerFinalScore + ") - Bet lost.";
                 status = "LOSE";
             }
             
             broadcast(p.getPlayerId() + ": " + resultMsg);
             p.sendMessage("INFO: Balance after settlement: [" + p.getBalance() + "]");
-            
-            // ★ 핵심: 승패 결과를 명확한 신호로 따로 보내줍니다!
             p.sendMessage("GAME_RESULT:" + status);
         }
         
         isGameStarted = false;
         isBettingPhase = false;
         broadcast("GAME_END: Round ended. Type START to play again.");
-    }
-
-    private int drawCard() {
-        return (int)(Math.random() * 10) + 2;
     }
 }
