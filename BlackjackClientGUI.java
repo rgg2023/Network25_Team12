@@ -468,16 +468,28 @@ public class BlackjackClientGUI extends JFrame {
     }
 
     private JLabel createCardLabel(int value, Color bgColor, Color textColor) {
-        JLabel label = new JLabel(String.valueOf(value), JLabel.CENTER);
+        // ★ 핵심: 값이 0이면 숫자를 빈 문자열("")로 바꿔서 안 보이게 함
+        String text = (value == 0) ? "" : String.valueOf(value);
+        
+        JLabel label = new JLabel(text, JLabel.CENTER);
         label.setPreferredSize(new Dimension(80, 110));
         label.setOpaque(true);
-        label.setBackground(bgColor);
-        label.setForeground(textColor);
         label.setFont(new Font("맑은 고딕", Font.BOLD, 24));
-        label.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Color.BLACK, 2),
-            BorderFactory.createEmptyBorder(5, 5, 5, 5)
-        ));
+        
+        if (value == 0) {
+            // ★ 0인 경우: 카드 뒷면처럼 꾸미기 (숫자 X, 짙은 빨간색 배경)
+            label.setBackground(new Color(100, 0, 0)); // Dark Red
+            label.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220), 2));
+        } else {
+            // 0이 아닌 경우: 정상적인 카드 (숫자 O, 흰색 배경)
+            label.setBackground(bgColor);
+            label.setForeground(textColor);
+            label.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.BLACK, 2),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)
+            ));
+        }
+        
         return label;
     }
 
