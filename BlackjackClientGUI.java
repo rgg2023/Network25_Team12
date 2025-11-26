@@ -413,27 +413,33 @@ public class BlackjackClientGUI extends JFrame {
 
     private void parseDealerCard(String msg) {
         try {
-            // 형식: "DEALER_DRAW: Dealer drew [A]. (Dealer Score: 11)"
-            int cardStartIdx = msg.indexOf("[") + 1;
+            // 메시지 형식 예: "DEALER_DRAW: Dealer drew [A]. (Dealer Score: 11)"
+            
+            // 1. 카드 이름 파싱 ([ ] 사이의 값 추출)
+            int cardStartIdx = msg.indexOf("[");
             int cardEndIdx = msg.indexOf("]", cardStartIdx);
-            if (cardEndIdx > cardStartIdx) {
-                String cardName = msg.substring(cardStartIdx, cardEndIdx).trim();
+            
+            if (cardStartIdx != -1 && cardEndIdx > cardStartIdx) {
+                String cardName = msg.substring(cardStartIdx + 1, cardEndIdx).trim();
+                // 카드 UI 추가
                 addDealerCard(cardName);
             }
             
-            // 점수 업데이트
-            int scoreStartIdx = msg.lastIndexOf("Score: ") + 7;
-            if (scoreStartIdx < 7) scoreStartIdx = msg.lastIndexOf("Score:") + 6;
-            
-            int scoreEndIdx = msg.indexOf(")", scoreStartIdx);
-            if (scoreEndIdx == -1) scoreEndIdx = msg.length();
-            
-            String scoreStr = msg.substring(scoreStartIdx, scoreEndIdx).trim().replaceAll("[^0-9]", "");
-            if (!scoreStr.isEmpty()) {
-                dealerScore = Integer.parseInt(scoreStr);
-                updateScores();
+            // 2. 딜러 점수 파싱 ("Score:" 뒤의 숫자 추출)
+            if (msg.contains("Score")) {
+                // "Score" 키워드가 포함된 부분부터 끝까지 자른 뒤 숫자만 추출
+                String scorePart = msg.substring(msg.lastIndexOf("Score"));
+                String scoreStr = scorePart.replaceAll("[^0-9]", "");
+                
+                if (!scoreStr.isEmpty()) {
+                    dealerScore = Integer.parseInt(scoreStr);
+                    updateScores();
+                }
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            appendLog("딜러 카드 파싱 오류: " + e.getMessage());
+            e.printStackTrace(); // 디버깅을 위해 콘솔에도 출력
+        }
     }
 
     private void parsePlayerCard(String msg) {
@@ -499,6 +505,8 @@ public class BlackjackClientGUI extends JFrame {
         JLabel cardLabel = createCardLabel(cardName, Color.WHITE, Color.BLACK);
         dealerCardLabels.add(cardLabel);
         dealerCardsPanel.add(cardLabel);
+        
+        // 패널 갱신
         dealerCardsPanel.revalidate();
         dealerCardsPanel.repaint();
     }
