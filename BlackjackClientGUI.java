@@ -529,10 +529,11 @@ public class BlackjackClientGUI extends JFrame {
         label.setBackground(bgColor);
         label.setForeground(textColor);
         
-        // 에이스나 페이스 카드는 더 큰 폰트 사용
-        if (cardName.equals("A") || cardName.equals("J") || cardName.equals("Q") || cardName.equals("K")) {
+        // 수정됨: J, Q, K만 큰 폰트(32)를 사용하고, A는 숫자와 같이 기본 크기(24)로 설정
+        if (cardName.equals("J") || cardName.equals("Q") || cardName.equals("K")) {
             label.setFont(new Font("맑은 고딕", Font.BOLD, 32));
         } else {
+            // A와 숫자 카드(2~10)는 이쪽으로 분기됨
             label.setFont(new Font("맑은 고딕", Font.BOLD, 24));
         }
         

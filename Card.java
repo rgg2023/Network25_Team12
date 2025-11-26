@@ -1,6 +1,7 @@
 public class Card {
     public enum Rank {
-        ACE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING
+        ACE, TWO, THREE, FOUR, FIVE, SIX, SEVEN,
+        EIGHT, NINE, TEN, JACK, QUEEN, KING
     }
     
     private Rank rank;
@@ -20,22 +21,25 @@ public class Card {
             case JACK: return "J";
             case QUEEN: return "Q";
             case KING: return "K";
+            case TEN: return "10";
             default: return String.valueOf(getValue());
         }
     }
     
-    // 카드의 기본 값 반환 (에이스는 1로, J/Q/K는 10으로)
+    // 기본 값 반환 (ACE=1, J/Q/K/TEN=10)
     public int getValue() {
         switch (rank) {
             case ACE: return 1;
+            case TEN:
             case JACK:
             case QUEEN:
             case KING: return 10;
-            default: return rank.ordinal() + 1; // TWO=2, THREE=3, ..., TEN=10
+            default: 
+                // TWO(1)=2, THREE(2)=3, ... NINE(8)=9
+                return rank.ordinal() + 1;
         }
     }
     
-    // 에이스인지 확인
     public boolean isAce() {
         return rank == Rank.ACE;
     }
@@ -45,7 +49,7 @@ public class Card {
         return getDisplayName();
     }
     
-    // 랜덤 카드 생성
+    // 랜덤 카드 생성 (1장 뽑기)
     public static Card drawRandom() {
         Rank[] ranks = Rank.values();
         Rank randomRank = ranks[(int)(Math.random() * ranks.length)];
